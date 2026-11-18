@@ -23,19 +23,8 @@ const noteSchema = new mongoose.Schema(
   }
 );
 
-// ==========================================
-// Explicit Database Indexes (Review Requirement)
-// ==========================================
-
-// 1. Compound index on { userId: 1, createdAt: -1 }:
-// Perfectly optimizes a user fetching their own notes with pagination & sorting:
-// Note.find({ userId }).sort({ createdAt: -1 }).skip(s).limit(l)
-// Follows the ESR (Equality, Sort, Range) rule to avoid in-memory sorting.
+// Indexes: compound index for user notes with pagination, and index for admin global list
 noteSchema.index({ userId: 1, createdAt: -1 });
-
-// 2. Index on { createdAt: -1 }:
-// Supports Admin viewing everyone's notes sorted chronologically without userId filter:
-// Note.find().sort({ createdAt: -1 }).skip(s).limit(l)
 noteSchema.index({ createdAt: -1 });
 
 const Note = mongoose.model('Note', noteSchema);
