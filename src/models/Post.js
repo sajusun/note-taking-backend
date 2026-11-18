@@ -23,17 +23,8 @@ const postSchema = new mongoose.Schema(
   }
 );
 
-// ==========================================
-// Explicit Database Indexes (Review Requirement)
-// ==========================================
-
-// 1. Compound index on { userId: 1, createdAt: -1 }:
-// Directly optimizes Scenario 2 Aggregation ($lookup on posts by foreignField userId)
-// and sorting user's posts chronologically.
+// Indexes: compound index on userId and createdAt for lookup, and createdAt for public feed
 postSchema.index({ userId: 1, createdAt: -1 });
-
-// 2. Index on { createdAt: -1 }:
-// Supports public listing of all posts sorted chronologically with pagination.
 postSchema.index({ createdAt: -1 });
 
 const Post = mongoose.model('Post', postSchema);

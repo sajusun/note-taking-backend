@@ -1,27 +1,18 @@
 import mongoose from 'mongoose';
 import User from '../models/User.js';
 
-// ==============================================================================
-// AGGREGATION SCENARIO 1: Group by Interests
-// Context: User profiles contain a list of interests (e.g., ['chess', 'reading']).
-// Task: Specific view to see users grouped by interests.
-// Constraint: You must use exactly one collection.aggregate() call.
-// Supported by Index: userSchema.index({ interests: 1 })
-// ==============================================================================
+// Aggregate users grouped by their interests
 export const getUsersByInterests = async (req, res, next) => {
   try {
     const results = await User.aggregate([
-      // 1. Only consider users who have non-empty interests array
       {
         $match: {
           interests: { $exists: true, $not: { $size: 0 } }
         }
       },
-      // 2. Deconstruct the interests array so each interest is an individual stream
       {
         $unwind: '$interests'
       },
-      // 3. Group by each interest and accumulate matching users
       {
         $group: {
           _id: '$interests',
@@ -36,7 +27,6 @@ export const getUsersByInterests = async (req, res, next) => {
           }
         }
       },
-      // 4. Project clean output schema
       {
         $project: {
           _id: 0,
@@ -45,7 +35,6 @@ export const getUsersByInterests = async (req, res, next) => {
           users: 1
         }
       },
-      // 5. Sort alphabetically by interest name
       {
         $sort: { interest: 1 }
       }
@@ -61,13 +50,7 @@ export const getUsersByInterests = async (req, res, next) => {
   }
 };
 
-// ==============================================================================
-// AGGREGATION SCENARIO 2: User Posts ($lookup)
-// Context: Users can write posts which are stored in a separate Posts collection.
-// Task: Retrieve all posts belonging to a particular user.
-// Constraint: Use a single aggregation pipeline with a $lookup stage.
-// Supported by Index: postSchema.index({ userId: 1, createdAt: -1 })
-// ==============================================================================
+// Retrieve a user and their posts using a single $lookup pipeline
 export const getUserPostsLookup = async (req, res, next) => {
   try {
     const { userId } = req.params;
@@ -79,15 +62,12 @@ export const getUserPostsLookup = async (req, res, next) => {
       });
     }
 
-    // Execute single aggregation pipeline starting from User and joining Posts via $lookup
     const results = await User.aggregate([
-      // 1. Match the targeted user
       {
         $match: {
           _id: new mongoose.Types.ObjectId(userId)
         }
       },
-      // 2. Perform $lookup stage to join 'posts' collection where post.userId == user._id
       {
         $lookup: {
           from: 'posts',
@@ -99,7 +79,6 @@ export const getUserPostsLookup = async (req, res, next) => {
           as: 'posts'
         }
       },
-      // 3. Project output excluding sensitive fields
       {
         $project: {
           password: 0,
